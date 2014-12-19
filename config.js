@@ -1,11 +1,9 @@
-// host = '172.16.153.122';	// hostname or IP address
-host = '127.0.0.1';	// hostname or IP address
-// host = '172.16.153.110';	// hostname or IP address
-port = 9001;
-topic = '#';		// topic to subscribe to
+host = 'trin.riviera.org.uk';
+port = 9010;
+topic = '#';
 useTLS = false;
 username = null;
 password = null;
-// username = "jjolie";
-// password = "aa";
+// username = "";
+// password = "";
 cleansession = true;
