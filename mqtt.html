@@ -52,12 +52,11 @@ function onConnect() {
 
 function onConnectionLost(response) {
     setTimeout(MQTTconnect, reconnectTimeout);
-    $('#status').replaceWith("connection lost: " + responseObject.errorMessage + ". Reconnecting");
+    $('#status').replaceWith("connection lost: " + response.errorMessage + ". Reconnecting");
 
 };
 
 function onMessageArrived(message) {
-
     var topic = message.destinationName;
     var payload = message.payloadString;
 
