@@ -15,6 +15,18 @@
 var mqtt;
 var reconnectTimeout = 2000;
 
+function getParameterByName( name )
+{
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  var regex = new RegExp( regexS );
+  var results = regex.exec( window.location.href );
+  if( results == null )
+    return "";
+  else
+    return decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
 function MQTTconnect() {
     mqtt = new Paho.MQTT.Client(
                     host,
@@ -46,6 +58,11 @@ function MQTTconnect() {
 function onConnect() {
     $('#status').replaceWith('Connected to ' + host + ':' + port);
     // Connection succeeded; subscribe to our topic
+    uri_topic = getParameterByName('topic');
+    if ( uri_topic != "" ){
+        console.log("using topic from uri="+uri_topic)
+        topic = uri_topic
+    } 
     mqtt.subscribe(topic, {qos: 0});
     $('#topic').replaceWith(topic);
 }
@@ -60,12 +77,13 @@ function onMessageArrived(message) {
     var topic = message.destinationName;
     var payload = message.payloadString;
 
-    $('#ws').prepend('<strong>topic:</strong> ' + topic + ' <strong>payload:</strong> ' + payload + '\n');
+    $('#ws').prepend('<strong>Time:</strong>' + Date() + '<strong>topic:</strong><a href="?topic='+topic+'">' + topic + '</a><br><strong>payload:</strong> ' + payload + '<br>');
 };
 
 
 $(document).ready(function() {
     MQTTconnect();
+
 });
 
 </script>
@@ -76,7 +94,7 @@ pre { font-size: 0.75em; }
   <body>
     <h1>Mosquitto Websockets</h1>
     <div>
-        <div>Subscribed to <strong><span id='topic'></span></strong></div>
+        <div>Subscribed to <strong><span id='topic'></span></strong> (<a href="?topic=#">reset to all</a>)</div>
         <div>Status: <strong><span id='status'></span></strong></div>
 
         <pre id='ws'></pre>
