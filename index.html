@@ -1,24 +1,32 @@
+<!-- © Copyright 2015 Robin Kearney -->
+<!-- Licensed under the MIT license with an additional non-advertising clause -->
+<!-- See https://github.com/rk295/maplin-webremote -->
+
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>Maplin Light Switch</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+<!-- This allows the an icon to be specified if  -->
+<!-- this is added to an iOS devices home screen -->
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<link rel="apple-touch-icon" href="touch-icon.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<link rel="apple-touch-icon" href="touch-icon.png"/>
 
-
-<!-- My JS -->
+<!-- paho mqtt client get from: -->
+<!-- http://git.eclipse.org/c/paho/org.eclipse.paho.mqtt.javascript.git/plain/src/mqttws31.js -->
+<!-- details here: https://eclipse.org/paho/clients/js/ -->
 <script src="mqttws31.js" type="text/javascript"></script>
+
+<!-- Local config -->
 <script src="config.js" type="text/javascript"></script>
 
 <!-- Others JS -->
 <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js" type="text/javascript"></script>
-<link href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet">
-<script src="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.0/js/bootstrap.min.js"></script>
-
+<link href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.0/js/bootstrap.min.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 var mqtt;
@@ -45,23 +53,26 @@ function MQTTconnect() {
     mqtt.onMessageArrived = onMessageArrived;
 
     if (username != null) {
+        console.log("MQTT: Using authentication");
         options.userName = username;
         options.password = password;
     }
-    // console.log(options);
     mqtt.connect(options);
 
 }
 
 // Called upon initial successful connection
 function onConnect() {
+    console.log("MQTT: Successfully connected to broker at host="+host+":"+port);
     $('#status').val('Connected to ' + host + ':' + port);
-    mqtt.subscribe('rooms/switches', {qos: 0});
+    console.log("MQTT: Subscribed to "+switchTopic+" to get a list of switches");
+    mqtt.subscribe(switchTopic, {qos: 0});
     display_alert('success', 'Connected successfully');
 }
 
 // Called when connection to the broker has been lost
 function onConnectionLost(response) {
+    console.log("MQTT: Lost connection to broker, attempting reconnect");
     setTimeout(MQTTconnect, reconnectTimeout);
     display_alert('danger', 'Connected lost: ' + response.errorMessage + ' Reconnecting');
 
@@ -70,7 +81,9 @@ function onConnectionLost(response) {
 // Builds a list of buttons, passed an hash
 // containing room name, channel, button
 function build_buttons(roomList){
+    console.log("JQUERY: Received a list of rooms, building list");
     roomList.rooms.forEach(function(obj) {
+        console.log("JQUERY: Adding switch named "+obj.name);
         $('#buttonlist').prepend('<li> \
             <div class="btn-group" role="group"> \
             <button id="'+obj.name+'-on" name="'+obj.name+'" channel="'+obj.channel+'" button="'+obj.button+'" state="on" type="button" class="btn btn-lg btn-success onoff" aria-label="Left Align">On</button> \
@@ -84,6 +97,7 @@ function build_buttons(roomList){
 // retained message of all the possible rooms
 function onMessageArrived(message) {
 
+    console.log("MQTT: Switch list received");
     var topic = message.destinationName;
     var payload = message.payloadString;
 
@@ -92,16 +106,21 @@ function onMessageArrived(message) {
 
 };
 
-// Actually send a MQTT message
 function send_message(channel, button, action){
 
     var payload = '{ "channel": ' + channel + ',' +
         '"button": ' + button + ',' +
         '"action": "' + action + '"}'
 
+    console.log("MQTT: Button pressed, sending message to "+toggleTopic);
+    console.log("MQTT: payload follows:");
+    console.log("MQTT: "+payload);
+
     msg = new Paho.MQTT.Message(payload);
-    msg.destinationName = "rooms/toggle";
+    msg.destinationName = toggleTopic;
     mqtt.send(msg);
+
+    console.log("MQTT: Message sent");
 
 }
 
@@ -114,8 +133,10 @@ function display_alert(state,message) {
                 <span class="sr-only">Close</span> \
             </button>'+message+'</div>').show(200)
 
-    // Removed this because I find it nicer
-    // without this closing
+    /*
+        Uncommenting this will auto close the alert after 2000ms
+        I implemented this, then found it annoying, YMMV.
+    */
     /*
     setTimeout(function () {
         $('#alert').toggle(200);
@@ -132,11 +153,11 @@ function display_status(message) {
     <span class="sr-only">Close</span> \
     </button>'+message+'</div>')
 
-    // Removed this because I find it nicer
-    // without this closing
+    // Closes the bootstrap notification after 2000 ms
     setTimeout(function () {
-    $('#status-message').toggle(200);
-}, 2000);
+        $('#status-message').toggle(200);
+    }, 2000);
+
 }
 
 $(document).ready(function() {
@@ -159,7 +180,7 @@ $(document).ready(function() {
         <div class="col-md-1"></div>
         <div class="col-md-10">
             <div id="alert"></div>
-                <ul id="buttonlist"><!--build_buttons populates--></ul>
+                <ul id="buttonlist"></ul><!--build_buttons populates-->
         </div> <!-- /.10 -->
         <div class="col-md-1"></div>
     </div><!-- /.row -->
@@ -167,9 +188,7 @@ $(document).ready(function() {
     <div class="row">
         <div class="col-md-1"></div>
         <div class="col-md-10">
-            <div id="status-message">
-                <!-- <div class="alert alert-info" role="alert">FOO!</div> -->
-            </div>
+            <div id="status-message"></div> <!-- placeholder for alerts -->
         </div><!-- /.10 -->
         <div class="col-md-1"></div>
     </div><!-- /.row -->
