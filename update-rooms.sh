@@ -1,6 +1,17 @@
 #!/bin/bash
 
-cat <<EOF | tr '\n' ' ' | sed 's/ //g' | mosquitto_pub -h trin -t rooms/switches -r -s
+# © Copyright 2015 Robin Kearney
+# Licensed under the MIT license with an additional non-advertising clause
+# See https://github.com/rk295/maplin-webremote
+
+# Quick hack in bash to turn a vaguely user friendly lump of JSON
+# into a single line, retained message on a given MQTT topic for
+# the Web UI to parse into a list of buttons
+
+host="trin"
+topic="rooms/switches"
+
+cat <<EOF | tr '\n' ' ' | sed 's/ //g' | mosquitto_pub -h $host -t $topic -r -s
 {
     "rooms": [
         {
@@ -27,6 +38,11 @@ cat <<EOF | tr '\n' ' ' | sed 's/ //g' | mosquitto_pub -h trin -t rooms/switches
             "name": "Spareroom",
             "channel": 3,
             "button": 1
+        },
+        {
+            "name": "OurRoom",
+            "channel": 3,
+            "button": 2
         }
     ]
 }
