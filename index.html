@@ -76,20 +76,31 @@ function build_buttons(roomList){
     console.log(roomList);
 
     // Clear the button list
-    console.log("Clearing button list")
+    // console.log("Clearing button list")
     $('#buttonlist').empty()
-
     rooms = roomList['rooms']
-    for ( var prop in rooms){
-        name = prop
+
+    var keys = [];
+    for (var key in rooms) {
+        // console.log("Sorting :" + key)
+        if (rooms.hasOwnProperty(key)) {
+            keys.push(key);
+        }
+    }
+    keys.sort();
+
+    for (i in keys) {
+        prop = keys[i]
         channel = rooms[prop]['channel']
         button = rooms[prop]['button']
-        console.log("Building button for:" + name + " channel:" + channel + " button:" + button)
-        $('#buttonlist').prepend('<li> \
+        state = rooms[prop]['state']
+        // console.log("Building button for:" + name + " channel:" + channel + " button:" + button + " state:" + state)
+        $('#buttonlist').append('<li> \
             <div class="btn-group" role="group"> \
-            <button id="'+name+'-on" name="'+name+'" channel="'+channel+'" button="'+button+'" state="on" type="button" class="btn btn-lg btn-success onoff" aria-label="Left Align">On</button> \
-            <button id="'+name+'-off" name="'+name+'" channel="'+channel+'" button="'+button+'" state="off" type="button" class="btn btn-lg btn-danger onoff" aria-label="Left Align">Off</button> \
+            <button id="'+prop+'-on" name="'+prop+'" channel="'+channel+'" button="'+button+'" state="on" type="button" class="btn btn-lg btn-success onoff" aria-label="Left Align">On</button> \
+            <button id="'+prop+'-off" name="'+prop+'" channel="'+channel+'" button="'+button+'" state="off" type="button" class="btn btn-lg btn-danger onoff" aria-label="Left Align">Off</button> \
             </div> \
+            <img src="img/bulb-' + state + '.png" class="img-rounded" height="40"> \
         ' + prop);
     }
 }
