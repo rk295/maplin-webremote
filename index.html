@@ -105,6 +105,35 @@ function build_buttons(roomList){
     }
 }
 
+function build_scenes(roomList){
+    console.log(roomList);
+
+    // Clear the scene list
+    // console.log("Clearing button list")
+    $('#scenelist').empty()
+    rooms = roomList['scenes']
+
+    var keys = [];
+    for (var key in rooms) {
+        // console.log("Sorting :" + key)
+        if (rooms.hasOwnProperty(key)) {
+            keys.push(key);
+        }
+    }
+    keys.sort();
+
+    for (i in keys) {
+        prop = keys[i]
+        // console.log("Building button for:" + name + " channel:" + channel + " button:" + button + " state:" + state)
+        $('#scenelist').append('<li> \
+            <div class="btn-group" role="group"> \
+            <button id="'+prop+'-on" name="'+prop+'" state="on" type="button" class="btn btn-lg btn-success onoff" aria-label="Left Align">On</button> \
+            <button id="'+prop+'-off" name="'+prop+'" state="off" type="button" class="btn btn-lg btn-danger onoff" aria-label="Left Align">Off</button> \
+            </div> \
+        ' + prop);
+    }
+}
+
 // Called when a message arrives. Used to retrive the
 // retained message of all the possible rooms
 function onMessageArrived(message) {
@@ -114,6 +143,7 @@ function onMessageArrived(message) {
 
     roomList = JSON.parse(payload);
     build_buttons(roomList)
+    build_scenes(roomList)
 
 };
 
@@ -121,8 +151,9 @@ function onMessageArrived(message) {
 function send_message(button, action){
 
     var payload = '{ "switch": "' + button + '",' +
-        '"action": "' + action + '"}'
+        '"action": "' + action + '", "source": "webui"}'
 
+    console.log("Sending msg: " + payload)
     msg = new Paho.MQTT.Message(payload);
     msg.destinationName = "rooms/toggle";
     mqtt.send(msg);
@@ -175,27 +206,36 @@ $(document).ready(function() {
         display_status(input.attr("name")+" turned "+input.attr("state"))
     });
 
+    $('#scenelist').on("click", '.onoff' , function(event){
+        var input = $( this );
+        // Send the mqtt message
+        send_message(input.attr("name"), input.attr("state"))
+        display_status(input.attr("name")+" turned "+input.attr("state"))
+    });
+
 });
 </script>
 </head>
 <body>
     <div class="row">
-        <div class="col-md-1"></div>
-        <div class="col-md-10">
             <div id="alert"></div>
-                <ul id="buttonlist"><!--build_buttons populates--></ul>
-        </div> <!-- /.10 -->
-        <div class="col-md-1"></div>
-    </div><!-- /.row -->
+        </div><!-- alert row -->
 
     <div class="row">
-        <div class="col-md-1"></div>
-        <div class="col-md-10">
-            <div id="status-message">
-                <!-- <div class="alert alert-info" role="alert">FOO!</div> -->
-            </div>
-        </div><!-- /.10 -->
-        <div class="col-md-1"></div>
-    </div><!-- /.row -->
+        <div class="col-md-6">
+                <h2>Switches</h2>
+                <ul id="buttonlist"><!--build_buttons populates--></ul>
+        </div>
+        <div class="col-md-6">
+                <h2>Scenes</h2>
+                <ul id="scenelist"><!--build_scenes populates--></ul>
+        </div>
+    </div><!-- button row -->
+
+    <div class="row">
+        <div class="col-md-12">
+            <div id="status-message"></div>
+        </div>
+    </div><!-- status row -->
 </body>
 </html>
