@@ -150,12 +150,14 @@ function onMessageArrived(message) {
 // Actually send a MQTT message
 function send_message(button, action){
 
-    var payload = '{ "switch": "' + button + '",' +
-        '"action": "' + action + '", "source": "webui"}'
+    var payload = ( action == 'on' ) ? "true" : "false";
+    var topic = "rooms/" + button
 
-    console.log("Sending msg: " + payload)
+    console.log("Sending " + topic + " to: " + payload);
+
     msg = new Paho.MQTT.Message(payload);
-    msg.destinationName = "rooms/toggle";
+    msg.destinationName = topic
+    msg.retained = true;
     mqtt.send(msg);
 
 }
@@ -223,11 +225,11 @@ $(document).ready(function() {
 
     <div class="row">
         <div class="col-md-6">
-                <h2>Switches</h2>
+                <h3>Switches</h3>
                 <ul id="buttonlist"><!--build_buttons populates--></ul>
         </div>
         <div class="col-md-6">
-                <h2>Scenes</h2>
+                <h3>Scenes</h3>
                 <ul id="scenelist"><!--build_scenes populates--></ul>
         </div>
     </div><!-- button row -->
